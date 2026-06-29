@@ -46,17 +46,37 @@ La consola de la Base de Datos H2 estará disponible en `http://localhost:8080/h
 
 ## Ejecución de Pruebas y Reportes de Cobertura 📊
 
-El proyecto cuenta con una sólida arquitectura de pruebas que cubre lógicas de negocio, validaciones y garantiza un **100% de cobertura en la capa de Controladores**.
+El proyecto cuenta con una sólida arquitectura de pruebas (Test-Driven Development) diseñada para garantizar la estabilidad, seguridad y correctitud de las reglas de negocio. La suite de pruebas abarca los siguientes frentes:
 
-Para correr todos los tests automatizados y simultáneamente construir el reporte de cobertura de código (Jacoco), ejecuta:
+1. **Pruebas de Dominio (Entity Layer) al 100%:** 
+   - Utilizando la librería **OpenPojo**, automatizamos la validación estructural de todos los métodos mutadores (Setters) y accesores (Getters) en la capa de entidades (`EntidadesPojoTest.java`), garantizando una métrica de cobertura perfecta sobre el modelo de datos.
+   
+2. **Pruebas de Lógica Transaccional (El Carrito):**
+   - Se probaron exhaustivamente los escenarios de éxito y error en `Carrito.java`. Validamos mediante aserciones estrictas que agregar un producto existente incrementa su `cantidad` (evitando duplicar filas). También probamos los flujos de fallo controlados, verificando que el sistema levante `IllegalArgumentException` ante productos nulos, cantidades negativas o insuficiencia de stock.
+
+3. **Pruebas de Servicios (Capa Lógica) y Seguridad (Mockito):**
+   - Haciendo uso extensivo de **Mockito** (con `@Mock` e `@InjectMocks`), logramos aislar la capa de servicios de la base de datos.
+   - Evaluamos los flujos de seguridad comprobando que las operaciones restringidas lanzen un `AccessDeniedException` cuando un usuario sin privilegios de Administrador intenta alterar inventarios o cuando alguien sin rol de Cajero intenta facturar.
+
+4. **Integración Continua (CI/CD) con JaCoCo:**
+   - Hemos configurado el plugin de **JaCoCo** a nivel de `pom.xml` para exigir, como regla estricta de compilación, una **cobertura mínima de código del 80%**. Cualquier *commit* que introduzca código no probado romperá el pipeline de construcción, evitando regresiones.
+
+### Instrucciones para ejecutar la Suite de Pruebas
+
+Para correr todos los tests automatizados, comprobar la regla de cobertura y simultáneamente construir el reporte visual de código, ejecuta:
 
 **En Windows:**
 ```bash
-.\mvnw test jacoco:report
+.\mvnw test jacoco:report jacoco:check
 ```
 
-Al finalizar con `BUILD SUCCESS`, podrás revisar en detalle la métrica abriendo el archivo:
-`target/site/jacoco/index.html` en tu navegador web de preferencia, o explorando `target/site/jacoco/jacoco.csv`.
+**En Linux / Mac:**
+```bash
+./mvnw test jacoco:report jacoco:check
+```
+
+Al finalizar con `BUILD SUCCESS`, podrás revisar el desglose exacto línea por línea abriendo el archivo:
+`target/site/jacoco/index.html` en tu navegador web de preferencia.
 
 ---
 
