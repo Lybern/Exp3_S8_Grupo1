@@ -18,6 +18,10 @@ Este proyecto consiste en un sistema backend robusto para la gestión y administ
 - **Seguridad Perimetral:** Implementación de `AccessDeniedException` y filtros JWT para asegurar que solo usuarios con roles autorizados (ADMINISTRADOR, CAJERO) puedan ejecutar acciones críticas.
 - **Refactorización del Carrito:** Introducción de la entidad intermedia `DetalleCarrito` impulsada por el desarrollo guiado por pruebas (TDD), centralizando la validación de stock y acumulación de cantidades.
 
+### Novedades Recientes (Semana 8) 🌟
+- **Documentación Avanzada (OpenAPI 3.0):** Integración de `springdoc-openapi` para auto-generar la documentación de todos los endpoints REST. Ahora el sistema cuenta con una interfaz gráfica interactiva (**Swagger UI**) donde los desarrolladores pueden explorar, autenticarse (JWT) y probar la API directamente desde el navegador.
+- **Navegación Dinámica (HATEOAS):** Implementación de enlaces Hypermedia en las respuestas JSON usando `PagedModel` y `EntityModel`. Los endpoints clave ahora son capaces de paginar, ordenar y entregar rutas relacionales (`self`, `first`, `last`, `prev`, `next`, `update`, `delete`) que guían al cliente sobre las operaciones disponibles sin necesidad de conocer la estructura de la URL de antemano. Todo expuesto mediante un limpio esquema DTO diseñado a la medida.
+
 ---
 
 ## Ejecución del Proyecto ⚙️
@@ -41,6 +45,7 @@ Abre una terminal en la raíz del proyecto y ejecuta el siguiente comando:
 
 El servidor arrancará por defecto en el puerto `8080`.
 La consola de la Base de Datos H2 estará disponible en `http://localhost:8080/h2-console`.
+La Documentación Swagger UI estará disponible en `http://localhost:8080/swagger-ui.html`.
 
 ---
 
