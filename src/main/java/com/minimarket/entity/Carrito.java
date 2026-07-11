@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class Carrito {
 
@@ -14,6 +16,7 @@ public class Carrito {
     // Un usuario solo puede tener un carrito activo a la vez
     @OneToOne
     @JoinColumn(name = "usuario_id", nullable = false, unique = true)
+    @JsonIgnore
     private Usuario usuario;
 
     // Relación bidireccional con la tabla intermedia (DetalleCarrito)

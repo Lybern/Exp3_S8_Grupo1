@@ -55,7 +55,15 @@ public class SecurityConfig {
         )
         .authorizeHttpRequests(auth -> auth
 
+                // SWAGGER
+                .requestMatchers(
+                "/swagger-ui/**",
+                "/swagger-ui.html",
+                "/v3/api-docs/**"
+                ).permitAll()
+
                 // 1. AUTENTICACION Y H2
+              
                 .requestMatchers("/api/auth/register").permitAll()
                 .requestMatchers("/api/auth/registro-interno").hasRole("ADMINISTRADOR")
                 .requestMatchers("/h2-console/**").permitAll()

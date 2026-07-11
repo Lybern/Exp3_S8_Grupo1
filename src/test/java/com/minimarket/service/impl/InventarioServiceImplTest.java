@@ -162,6 +162,37 @@ public class InventarioServiceImplTest {
         assertEquals("Los datos del movimiento de inventario son inválidos.", exception.getMessage());
     }
 
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR")
+    public void testSave_MovimientoEntrada_RegistraCorrectamente() {
+        // Arrange
+        movimientoMock.setTipoMovimiento("ENTRADA_PROVEEDOR");
+        movimientoMock.setCantidad(5);
+
+        when(inventarioRepository.save(any(Inventario.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+
+        // Act
+        Inventario resultado =
+            inventarioService.save(movimientoMock);
+
+        // Assert
+        assertNotNull(resultado);
+        assertEquals(
+            "ENTRADA_PROVEEDOR",
+            resultado.getTipoMovimiento()
+            );
+        assertEquals(5, resultado.getCantidad());
+        assertEquals(
+            100L,
+            resultado.getProducto().getId()
+            );
+
+        verify(inventarioRepository, times(1))
+            .save(movimientoMock);
+            }
+
+
     /**
      * Verifica que un administrador pueda purgar o eliminar un registro del kardex.
      */

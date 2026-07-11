@@ -221,24 +221,34 @@ public class ProductoServiceImplTest {
 
    
     @Test
-    @WithMockUser(roles = "ADMINISTRADOR")
-    public void testModificarProducto_UsuarioEsAdmin_ActualizaExitosamente() {
+@WithMockUser(roles = "ADMINISTRADOR")
+public void testModificarProducto_UsuarioEsAdmin_ActualizaExitosamente() {
         // Arrange
         Producto datosNuevos = new Producto();
         datosNuevos.setNombre("Arroz Grado 2");
         datosNuevos.setPrecio(1100.0);
         datosNuevos.setStock(15);
 
-        when(productoRepository.findById(100L)).thenReturn(Optional.of(productoMock));
-        when(productoRepository.save(any(Producto.class))).thenReturn(productoMock);
+        when(productoRepository.findById(100L))
+            .thenReturn(Optional.of(productoMock));
+
+        when(productoRepository.save(any(Producto.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Producto resultado = productoService.modificarProducto(100L, datosNuevos);
+        Producto resultado =
+            productoService.modificarProducto(100L, datosNuevos);
 
         // Assert
         assertNotNull(resultado);
+        assertEquals(100L, resultado.getId());
+        assertEquals("Arroz Grado 2", resultado.getNombre());
+        assertEquals(1100.0, resultado.getPrecio());
+        assertEquals(15, resultado.getStock());
+
+        verify(productoRepository, times(1)).findById(100L);
         verify(productoRepository, times(1)).save(productoMock);
-    }
+}
 
     
    @Test

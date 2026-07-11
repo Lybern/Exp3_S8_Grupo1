@@ -1,5 +1,7 @@
 package com.minimarket.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -17,6 +19,7 @@ public class DetalleCarrito {
     // Relación ManyToOne hacia la cabecera del Carrito
     @ManyToOne
     @JoinColumn(name = "carrito_id", nullable = false)
+    @JsonIgnore
     private Carrito carrito;
 
     // Relación ManyToOne hacia el Producto
