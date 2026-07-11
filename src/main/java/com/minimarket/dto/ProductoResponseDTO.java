@@ -18,6 +18,16 @@ public class ProductoResponseDTO {
     @Schema(description = "Enlaces a operaciones sobre el producto")
     private Map<String, ProductoPageResponseDTO.Link> links;
 
+    public static ProductoResponseDTO from(com.minimarket.entity.Producto producto) {
+        ProductoResponseDTO dto = new ProductoResponseDTO();
+        dto.setId(producto.getId());
+        dto.setNombre(producto.getNombre());
+        dto.setPrecio(producto.getPrecio());
+        dto.setStock(producto.getStock());
+        dto.setCategoria(producto.getCategoria());
+        return dto;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNombre() { return nombre; }

@@ -47,7 +47,7 @@ public class ProductoController {
       @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoPageResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<PagedModel<EntityModel<Producto>>> listarTodos(
+  public ResponseEntity<PagedModel<EntityModel<com.minimarket.dto.ProductoResponseDTO>>> listarTodos(
     @RequestParam(defaultValue = "0") int page,
     @RequestParam(defaultValue = "10") int size,
     @RequestParam(defaultValue = "nombre") String sortBy,
@@ -60,17 +60,22 @@ public class ProductoController {
     Pageable pageable = PageRequest.of(page, size, sort);
     
     Page<Producto> productosPage = productoService.findAll(pageable);
-    List<EntityModel<Producto>> productosModel = productosPage.getContent().stream()
-            .map(producto -> EntityModel.of(producto,
+    List<EntityModel<com.minimarket.dto.ProductoResponseDTO>> productosModel = productosPage.getContent().stream()
+            .map(producto -> EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(producto),
+                    linkTo(methodOn(ProductoController.class).obtenerProductoPorId(producto.getId())).withSelfRel(),
                     linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withRel("allProductos"),
                     linkTo(methodOn(ProductoController.class).actualizarProducto(producto.getId(), producto)).withRel("update"),
                     linkTo(methodOn(ProductoController.class).eliminarProducto(producto.getId())).withRel("delete")))
             .collect(Collectors.toList());
             
     PageMetadata metadata = new PageMetadata(productosPage.getSize(), productosPage.getNumber(), productosPage.getTotalElements(), productosPage.getTotalPages());
-    PagedModel<EntityModel<Producto>> pagedModel = PagedModel.of(productosModel, metadata);
+    PagedModel<EntityModel<com.minimarket.dto.ProductoResponseDTO>> pagedModel = PagedModel.of(productosModel, metadata);
     
-    pagedModel.add(linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withSelfRel());
+    pagedModel.add(
+        linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withSelfRel(),
+        linkTo(methodOn(ProductoController.class).listarTodos(0, size, sortBy, sortDir)).withRel("first"),
+        linkTo(methodOn(ProductoController.class).listarTodos(productosPage.getTotalPages() == 0 ? 0 : productosPage.getTotalPages() - 1, size, sortBy, sortDir)).withRel("last")
+    );
     
     if (productosPage.hasPrevious()) {
         pagedModel.add(linkTo(methodOn(ProductoController.class).listarTodos(productosPage.getNumber() - 1, size, sortBy, sortDir)).withRel("prev"));
@@ -80,6 +85,27 @@ public class ProductoController {
     }
     
     return ResponseEntity.ok(pagedModel);
+  }
+
+  @GetMapping("/{id}")
+  @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'CAJERO', 'CLIENTE')")
+  @Operation(summary = "Obtener producto por ID", description = "Devuelve los detalles de un producto específico.")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Producto encontrado"),
+      @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+  })
+  @SecurityRequirement(name = "bearerAuth")
+  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> obtenerProductoPorId(@PathVariable Long id) {
+      Producto p = productoService.findById(id);
+      if (p != null) {
+          EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(p),
+                  linkTo(methodOn(ProductoController.class).obtenerProductoPorId(id)).withSelfRel(),
+                  linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
+                  linkTo(methodOn(ProductoController.class).actualizarProducto(id, p)).withRel("update"),
+                  linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
+          return ResponseEntity.ok(model);
+      }
+      return ResponseEntity.notFound().build();
   }
 
   @PostMapping
