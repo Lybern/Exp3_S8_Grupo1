@@ -152,10 +152,16 @@ public class ProductoController {
   @PreAuthorize("hasRole('ADMINISTRADOR')")
   @Operation(summary = "Eliminar un producto", description = "Elimina un producto del sistema según su ID.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente")
+      @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente"),
+      @ApiResponse(responseCode = "404", description = "Producto no encontrado")
   })
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<Map<String, String>>> eliminarProducto(@PathVariable Long id) {
+    Producto existente = productoService.findById(id);
+    if (existente == null) {
+        return ResponseEntity.notFound().build();
+    }
+    
     productoService.deleteById(id);
     
     // HATEOAS: Como el producto ya no existe, sugerimos volver a la lista o crear uno nuevo
