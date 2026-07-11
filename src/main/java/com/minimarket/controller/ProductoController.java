@@ -117,10 +117,13 @@ public class ProductoController {
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<Producto>> crearProducto(@RequestBody Producto producto) {
     Producto guardado = productoService.save(producto);
+    
+    // Se agregan enlaces HATEOAS para guiar al usuario a las siguientes acciones posibles
     EntityModel<Producto> model = EntityModel.of(guardado,
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             linkTo(methodOn(ProductoController.class).actualizarProducto(guardado.getId(), guardado)).withRel("update"),
             linkTo(methodOn(ProductoController.class).eliminarProducto(guardado.getId())).withRel("delete"));
+            
     return ResponseEntity.ok(model);
   }
 
@@ -135,10 +138,13 @@ public class ProductoController {
   public ResponseEntity<EntityModel<Producto>> actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
     producto.setId(id);
     Producto actualizado = productoService.save(producto);
+    
+    // HATEOAS: Se incluye enlace a sí mismo (update), a la lista total y a la opción de eliminar
     EntityModel<Producto> model = EntityModel.of(actualizado,
             linkTo(methodOn(ProductoController.class).actualizarProducto(id, actualizado)).withSelfRel(),
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
+            
     return ResponseEntity.ok(model);
   }
 
@@ -151,10 +157,13 @@ public class ProductoController {
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<Map<String, String>>> eliminarProducto(@PathVariable Long id) {
     productoService.deleteById(id);
+    
+    // HATEOAS: Como el producto ya no existe, sugerimos volver a la lista o crear uno nuevo
     EntityModel<Map<String, String>> responseModel = EntityModel.of(Map.of("message", "Producto eliminado exitosamente"),
         linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
         linkTo(methodOn(ProductoController.class).crearProducto(new Producto())).withRel("addProducto")
     );
+    
     return ResponseEntity.ok(responseModel);
   }
 }
