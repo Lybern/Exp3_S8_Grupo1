@@ -2,10 +2,12 @@ package com.minimarket.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Map;
 import com.minimarket.entity.Categoria;
 
 @Schema(description = "DTO para la respuesta paginada de productos en formato HATEOAS")
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProductoPageResponseDTO {
 
     @JsonProperty("_embedded")
