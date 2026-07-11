@@ -57,9 +57,11 @@ public class ProductoController {
     ? Sort.by(sortBy).ascending() 
     : Sort.by(sortBy).descending();
     
+    // 1. Obtener la página cruda desde la base de datos
     Pageable pageable = PageRequest.of(page, size, sort);
-    
     Page<Producto> productosPage = productoService.findAll(pageable);
+    
+    // 2. Transformar la lista de entidades a una lista de DTOs envueltos en EntityModel (HATEOAS)
     List<EntityModel<com.minimarket.dto.ProductoResponseDTO>> productosModel = productosPage.getContent().stream()
             .map(producto -> EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(producto),
                     linkTo(methodOn(ProductoController.class).obtenerProductoPorId(producto.getId())).withSelfRel(),
@@ -68,15 +70,18 @@ public class ProductoController {
                     linkTo(methodOn(ProductoController.class).eliminarProducto(producto.getId())).withRel("delete")))
             .collect(Collectors.toList());
             
+    // 3. Crear los metadatos de paginación para el PagedModel
     PageMetadata metadata = new PageMetadata(productosPage.getSize(), productosPage.getNumber(), productosPage.getTotalElements(), productosPage.getTotalPages());
     PagedModel<EntityModel<com.minimarket.dto.ProductoResponseDTO>> pagedModel = PagedModel.of(productosModel, metadata);
     
+    // 4. Agregar los enlaces globales de navegación de la página (self, first, last)
     pagedModel.add(
         linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withSelfRel(),
         linkTo(methodOn(ProductoController.class).listarTodos(0, size, sortBy, sortDir)).withRel("first"),
         linkTo(methodOn(ProductoController.class).listarTodos(productosPage.getTotalPages() == 0 ? 0 : productosPage.getTotalPages() - 1, size, sortBy, sortDir)).withRel("last")
     );
     
+    // 5. Agregar dinámicamente prev/next si existen páginas adyacentes
     if (productosPage.hasPrevious()) {
         pagedModel.add(linkTo(methodOn(ProductoController.class).listarTodos(productosPage.getNumber() - 1, size, sortBy, sortDir)).withRel("prev"));
     }
@@ -97,6 +102,8 @@ public class ProductoController {
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> obtenerProductoPorId(@PathVariable Long id) {
       Producto p = productoService.findById(id);
+      
+      // Si el producto existe, lo transformamos a DTO y le inyectamos sus enlaces dinámicos
       if (p != null) {
           EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(p),
                   linkTo(methodOn(ProductoController.class).obtenerProductoPorId(id)).withSelfRel(),
@@ -105,6 +112,8 @@ public class ProductoController {
                   linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
           return ResponseEntity.ok(model);
       }
+      
+      // Si no existe, devolvemos un 404 estandarizado
       return ResponseEntity.notFound().build();
   }
 
