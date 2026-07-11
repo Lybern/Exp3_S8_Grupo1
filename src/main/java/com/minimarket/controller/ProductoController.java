@@ -115,11 +115,11 @@ public class ProductoController {
       @ApiResponse(responseCode = "201", description = "Producto creado exitosamente")
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<Producto>> crearProducto(@RequestBody Producto producto) {
+  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> crearProducto(@RequestBody Producto producto) {
     Producto guardado = productoService.save(producto);
     
     // Se agregan enlaces HATEOAS para guiar al usuario a las siguientes acciones posibles
-    EntityModel<Producto> model = EntityModel.of(guardado,
+    EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(guardado),
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             linkTo(methodOn(ProductoController.class).actualizarProducto(guardado.getId(), guardado)).withRel("update"),
             linkTo(methodOn(ProductoController.class).eliminarProducto(guardado.getId())).withRel("delete"));
@@ -135,12 +135,12 @@ public class ProductoController {
       @ApiResponse(responseCode = "404", description = "Producto no encontrado")
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<Producto>> actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
+  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
     producto.setId(id);
     Producto actualizado = productoService.save(producto);
     
     // HATEOAS: Se incluye enlace a sí mismo (update), a la lista total y a la opción de eliminar
-    EntityModel<Producto> model = EntityModel.of(actualizado,
+    EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(actualizado),
             linkTo(methodOn(ProductoController.class).actualizarProducto(id, actualizado)).withSelfRel(),
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
