@@ -1,4 +1,5 @@
 # Minimarket - API Backend
+Implementando de forma avanzada documentación en Microservicios con OpenAPI y HATEOAS
 
 Este proyecto consiste en un sistema backend robusto para la gestión y administración de un **Minimarket**. Está construido con arquitectura de Microservicios orientada al dominio y proporciona endpoints RESTful para la administración integral de Inventarios, Ventas, Usuarios, Categorías, y el Carrito de Compras.
 
