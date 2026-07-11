@@ -127,11 +127,28 @@ public class ProductoController {
   public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> crearProducto(@RequestBody Producto producto) {
     Producto guardado = productoService.save(producto);
     
-    // Se agregan enlaces HATEOAS para guiar al usuario a las siguientes acciones posibles
-    EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(guardado),
+    // =========================================================================================
+    // HATEOAS A NIVEL DE CREACIÓN (POST):
+    // Una vez que el producto se crea exitosamente en la Base de Datos, no solo devolvemos los datos,
+    // sino que construimos un EntityModel para inyectar enlaces de Navegación (Hipermedia).
+    // 
+    // Funciones clave de Spring HATEOAS:
+    // - linkTo(): Inspecciona la clase del Controlador para saber cuál es la ruta base (ej. /api/productos)
+    // - methodOn(): Simula una llamada al método destino para extraer sus parámetros y construir la URL final dinámicamente.
+    // - withRel("nombre"): Asigna la etiqueta semántica ("rel") que el cliente leerá en el JSON.
+    // =========================================================================================
+    EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(
+            com.minimarket.dto.ProductoResponseDTO.from(guardado), // 1. Protegemos la entidad inyectando el DTO
+            
+            // 2. Enlace hacia la lista completa de productos.
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
+            
+            // 3. Enlace con la operación HTTP PUT que permitiría actualizar este recurso recién creado.
             linkTo(methodOn(ProductoController.class).actualizarProducto(guardado.getId(), guardado)).withRel("update"),
-            linkTo(methodOn(ProductoController.class).eliminarProducto(guardado.getId())).withRel("delete"));
+            
+            // 4. Enlace con la operación HTTP DELETE que permitiría destruir este recurso.
+            linkTo(methodOn(ProductoController.class).eliminarProducto(guardado.getId())).withRel("delete")
+    );
             
     return ResponseEntity.ok(model);
   }
@@ -148,11 +165,25 @@ public class ProductoController {
     producto.setId(id);
     Producto actualizado = productoService.save(producto);
     
-    // HATEOAS: Se incluye enlace a sí mismo (update), a la lista total y a la opción de eliminar
-    EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(actualizado),
+    // =========================================================================================
+    // HATEOAS A NIVEL DE ACTUALIZACIÓN (PUT):
+    // Se implementa el concepto fundamental de "self". 
+    // Cuando un cliente actualiza un recurso, el enlace principal que recibe de vuelta es 
+    // la propia URL que acaba de golpear.
+    // =========================================================================================
+    EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(
+            com.minimarket.dto.ProductoResponseDTO.from(actualizado),
+            
+            // withSelfRel(): Es un estándar REST. Etiqueta automáticamente el enlace como "self", indicando
+            // que esta es la URL de autoridad para el estado actual de este recurso.
             linkTo(methodOn(ProductoController.class).actualizarProducto(id, actualizado)).withSelfRel(),
+            
+            // Navegación hacia recursos hermanos (volver a la lista completa).
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
-            linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
+            
+            // Permite al cliente descubrir dinámicamente cómo borrar lo que acaba de actualizar.
+            linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete")
+    );
             
     return ResponseEntity.ok(model);
   }
@@ -173,9 +204,22 @@ public class ProductoController {
     
     productoService.deleteById(id);
     
-    // HATEOAS: Como el producto ya no existe, sugerimos volver a la lista o crear uno nuevo
-    EntityModel<Map<String, String>> responseModel = EntityModel.of(Map.of("message", "Producto eliminado exitosamente"),
+    // =========================================================================================
+    // HATEOAS A NIVEL DE ELIMINACIÓN (DELETE):
+    // Una vez que el recurso es destruido (DELETE), no tiene sentido devolver un "self" a un 
+    // producto que ya no existe (daría 404). 
+    // 
+    // Por ende, se utiliza HATEOAS para guiar al usuario hacia el siguiente flujo lógico:
+    // 1. "allProductos": El enlace para volver a ver el inventario restante.
+    // 2. "addProducto": El enlace por si desea revertir la acción creando un producto nuevo.
+    // =========================================================================================
+    EntityModel<Map<String, String>> responseModel = EntityModel.of(
+        Map.of("message", "Producto eliminado exitosamente"), // Payload de respuesta genérico
+        
+        // Guía al cliente de vuelta al listado
         linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
+        
+        // Le enseña al cliente cuál es el endpoint (POST) para crear registros
         linkTo(methodOn(ProductoController.class).crearProducto(new Producto())).withRel("addProducto")
     );
     
