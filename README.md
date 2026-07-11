@@ -1,7 +1,10 @@
-# Minimarket - API Backend
-Implementando de forma avanzada documentación en Microservicios con OpenAPI y HATEOAS
+# Minimarket - API Backend (REST, OpenAPI, HATEOAS)
 
-Este proyecto consiste en un sistema backend robusto para la gestión y administración de un **Minimarket**. Está construido con arquitectura de Microservicios orientada al dominio y proporciona endpoints RESTful para la administración integral de Inventarios, Ventas, Usuarios, Categorías, y el Carrito de Compras.
+Este proyecto consiste en un sistema backend robusto para la gestión y administración de un **Minimarket**. Está construido con arquitectura de Microservicios orientada al dominio y proporciona endpoints RESTful para la administración integral de Inventarios, Ventas, Usuarios, Categorías, y el Carrito de Compras. 
+
+El proyecto destaca por su alto nivel de madurez técnica, incorporando estándares de la industria como **Test-Driven Development (TDD)**, **Seguridad con JWT**, **Documentación OAS3 (Swagger)** y **Madurez REST Nivel 3 de Richardson (HATEOAS)**.
+
+---
 
 ## Tecnologías Principales 🚀
 - **Java 20**
@@ -10,20 +13,27 @@ Este proyecto consiste en un sistema backend robusto para la gestión y administ
 - **Base de Datos H2** (Configurada en memoria para entornos de desarrollo y testing rápido)
 - **Maven** (Gestor de dependencias)
 - **Spring Security & JWT** (Autenticación stateless y control de acceso basado en roles)
+- **Spring HATEOAS** (Navegación dinámica y paginación)
+- **Springdoc OpenAPI (Swagger UI)** (Documentación interactiva de la API)
+- **JUnit 5, Mockito & JaCoCo** (Testing y análisis de cobertura)
 
-### Testing y QA 🧪
-- **JUnit 5 & Mockito** (Desarrollo y simulación de Pruebas Unitarias aisladas)
-- **Jacoco Maven Plugin** (Generación de métricas y reportes de cobertura de código)
+---
 
-### Novedades Recientes (Semana 6) 🛡️
-- **Seguridad Perimetral:** Implementación de `AccessDeniedException` y filtros JWT para asegurar que solo usuarios con roles autorizados (ADMINISTRADOR, CAJERO) puedan ejecutar acciones críticas.
-- **Refactorización del Carrito:** Introducción de la entidad intermedia `DetalleCarrito` impulsada por el desarrollo guiado por pruebas (TDD), centralizando la validación de stock y acumulación de cantidades.
+## Implementación de HATEOAS para cumplir requerimientos de la semana 8 🌟
 
-### Novedades Recientes (Semana 8) 🌟
-- **Documentación Avanzada (OpenAPI 3.0):** Integración de `springdoc-openapi` para auto-generar la documentación de todos los endpoints REST. Ahora el sistema cuenta con una interfaz gráfica interactiva (**Swagger UI**) donde los desarrolladores pueden explorar, autenticarse (JWT) y probar la API directamente desde el navegador. El contrato OAS generado garantiza que los tipos de respuesta y descripciones de error calcen al 100% con la implementación real del servidor.
-- **Navegación Dinámica y Paginación (HATEOAS):** Implementación de hipermedia de Nivel 3 de Richardson en el CRUD de productos. Mediante `PagedModel` y `EntityModel`, la API es capaz de auto-paginar el contenido inyectando metadatos dinámicos (`first`, `last`, `prev`, `next`) en conjunto con enlaces de navegación empresarial (`self`, `allProductos`, `update`, `delete`). Esto permite al cliente de la API descubrir rutas y acciones sin depender del enrutamiento estático.
-- **Implementación Segura mediante DTOs:** Para evitar que la lógica interna de HATEOAS o las relaciones ORM de la base de datos se filtren y saturen el contrato de Swagger, se implementaron Data Transfer Objects (`ProductoResponseDTO`). Gracias a esto, el JSON final entregado al cliente (e inyectado en Swagger) es purificado, sin variables del Framework, eliminando enlaces nulos mediante `@JsonInclude(NON_NULL)` y renombrando las colecciones semánticamente (`productoList`) a través de la directiva `@Relation`.
-- **Código Educativo y Explicativo:** Los Controladores fueron fuertemente refactorizados y enriquecidos con comentarios pedagógicos línea a línea (explicando el uso de `linkTo`, `methodOn` y `withRel`) con el objetivo de demostrar un dominio completo y profesional de las dependencias de hipermedia de Spring.
+Esta semana el proyecto evolucionó hacia una arquitectura completamente documentada:
+
+1. **Documentación Avanzada (OpenAPI 3.0):** 
+   Se integró `springdoc-openapi` para auto-generar la documentación de todos los endpoints. Contamos con una interfaz gráfica interactiva (**Swagger UI**) donde puedes explorar, autenticarte (JWT) y probar la API directamente. El contrato OAS generado garantiza que los tipos de respuesta y descripciones de error calcen al 100% con la implementación real del servidor.
+   
+2. **Navegación Dinámica y Paginación (HATEOAS):** 
+   Implementación de hipermedia de Nivel 3 de Richardson. Mediante `PagedModel` y `EntityModel`, la API es capaz de **auto-paginar** el contenido inyectando metadatos dinámicos (`first`, `last`, `prev`, `next`) en conjunto con enlaces de navegación empresarial (`self`, `allProductos`, `update`, `delete`). Esto permite al cliente descubrir rutas sin depender del enrutamiento estático.
+
+3. **Implementación segura mediante DTOs:** 
+   Para evitar que la lógica interna de HATEOAS o las relaciones ORM se filtren, se implementaron **Data Transfer Objects** (Ej: `ProductoResponseDTO`). Gracias a esto, el JSON final es purificado, eliminando campos nulos mediante `@JsonInclude(NON_NULL)` y renombrando las colecciones semánticamente (`productoList`) a través de `@Relation`.
+
+4. **Refactorización:** 
+   Los Controladores fueron enriquecidos con comentarios pedagógicos línea a línea (explicando `linkTo`, `methodOn` y `withRel`) demostrando un dominio profesional del framework.
 
 ---
 
@@ -31,147 +41,133 @@ Este proyecto consiste en un sistema backend robusto para la gestión y administ
 
 ### Requisitos previos
 - Tener JDK 20 instalado en el equipo.
-- (Opcional) Contar con Maven instalado globalmente, aunque puedes usar el Wrapper (`mvnw`) que viene en la raíz del proyecto.
 
 ### Pasos para iniciar el servidor
 Abre una terminal en la raíz del proyecto y ejecuta el siguiente comando:
 
-**En Windows:**
+**Windows:**
 ```bash
-.\mvnw spring-boot:run
+.\mvnw clean spring-boot:run
+```
+**Linux / Mac:**
+```bash
+./mvnw clean spring-boot:run
 ```
 
-**En Linux / Mac:**
-```bash
-./mvnw spring-boot:run
-```
+- **API Base:** `http://localhost:8080`
+- **Swagger UI (Documentación Interactiva):** `http://localhost:8080/swagger-ui.html`
+- **Base de Datos H2:** `http://localhost:8080/h2-console`
 
-El servidor arrancará por defecto en el puerto `8080`.
-La consola de la Base de Datos H2 estará disponible en `http://localhost:8080/h2-console`.
-La Documentación Swagger UI estará disponible en `http://localhost:8080/swagger-ui.html`.
+*(Nota: Para acceder a los endpoints protegidos en Swagger, primero debes hacer POST en `/api/auth/login` con credenciales de administrador (ej: admin / 1234), copiar el token JWT, y pegarlo en el botón "Authorize" superior).*
 
 ---
 
-## Ejecución de Pruebas y Reportes de Cobertura 📊
+## Guía de Endpoints y Ejemplos de Uso (Con HATEOAS) 🌐
 
-El proyecto cuenta con una sólida arquitectura de pruebas (Test-Driven Development) diseñada para garantizar la estabilidad, seguridad y correctitud de las reglas de negocio. La suite de pruebas abarca los siguientes frentes:
+A continuación, se muestra cómo interactuar con los endpoints principales y cómo se visualiza la nueva estructura con HATEOAS.
 
-1. **Pruebas de Dominio (Entity Layer) al 100%:** 
-   - Utilizando la librería **OpenPojo**, automatizamos la validación estructural de todos los métodos mutadores (Setters) y accesores (Getters) en la capa de entidades (`EntidadesPojoTest.java`), garantizando una métrica de cobertura perfecta sobre el modelo de datos.
-   
-2. **Pruebas de Lógica Transaccional (El Carrito):**
-   - Se probaron exhaustivamente los escenarios de éxito y error en `Carrito.java`. Validamos mediante aserciones estrictas que agregar un producto existente incrementa su `cantidad` (evitando duplicar filas). También probamos los flujos de fallo controlados, verificando que el sistema levante `IllegalArgumentException` ante productos nulos, cantidades negativas o insuficiencia de stock.
-
-3. **Pruebas de Servicios (Capa Lógica) y Seguridad (Mockito):**
-   - Haciendo uso extensivo de **Mockito** (con `@Mock` e `@InjectMocks`), logramos aislar la capa de servicios de la base de datos.
-   - Evaluamos los flujos de seguridad comprobando que las operaciones restringidas lanzen un `AccessDeniedException` cuando un usuario sin privilegios de Administrador intenta alterar inventarios o cuando alguien sin rol de Cajero intenta facturar.
-
-4. **Integración Continua (CI/CD) con JaCoCo:**
-   - Hemos configurado el plugin de **JaCoCo** a nivel de `pom.xml` para exigir, como regla estricta de compilación, una **cobertura mínima de código del 80%**. Cualquier *commit* que introduzca código no probado romperá el pipeline de construcción, evitando regresiones.
-
-### Instrucciones para ejecutar la Suite de Pruebas
-
-Para correr todos los tests automatizados, comprobar la regla de cobertura y simultáneamente construir el reporte visual de código, ejecuta:
-
-**En Windows:**
-```bash
-.\mvnw test jacoco:report jacoco:check
-```
-
-**En Linux / Mac:**
-```bash
-./mvnw test jacoco:report jacoco:check
-```
-
-Al finalizar con `BUILD SUCCESS`, podrás revisar el desglose exacto línea por línea abriendo el archivo:
-`target/site/jacoco/index.html` en tu navegador web de preferencia.
-
----
-
-## Endpoints Principales y Ejemplos de Uso 🌐
-
-A continuación, se presentan algunos ejemplos de peticiones HTTP para interactuar con la API RESTful. La URL base por defecto es `http://localhost:8080`.
-
-### 1. Gestión de Usuarios (`/api/usuarios`)
-
-**Crear un Usuario (POST)**
-```json
-POST /api/usuarios
+### 1. Autenticación (Login)
+Para obtener el token JWT necesario para las demás operaciones.
+```http
+POST /api/auth/login
 Content-Type: application/json
 
 {
-  "username": "jdoe",
-  "password": "securepassword123",
-  "nombre": "John",
-  "apellido": "Doe",
-  "email": "jdoe@example.com",
-  "direccion": "Avenida Siempre Viva 742"
+  "username": "admin",
+  "password": "password"
 }
 ```
 
-**Obtener todos los Usuarios (GET)**
+### 2. Gestión de Productos (Paginado + HATEOAS)
+
+**Obtener lista de Productos (GET)**
 ```http
-GET /api/usuarios
+GET /api/productos?page=0&size=5&sortBy=nombre&sortDir=asc
+Authorization: Bearer <TU_TOKEN>
+```
+**Respuesta JSON esperada:**
+```json
+{
+  "_embedded": {
+    "productoList": [
+      {
+        "id": 1,
+        "nombre": "Arroz Grado 1 (1kg)",
+        "precio": 1300.0,
+        "stock": 50,
+        "categoria": { "id": 1, "nombre": "Abarrotes" },
+        "_links": {
+          "self": { "href": "http://localhost:8080/api/productos/1" },
+          "allProductos": { "href": "http://localhost:8080/api/productos?page=0&size=5&sortBy=nombre&sortDir=asc" },
+          "update": { "href": "http://localhost:8080/api/productos/1" },
+          "delete": { "href": "http://localhost:8080/api/productos/1" }
+        }
+      }
+    ]
+  },
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/productos?page=0&size=5&sortBy=nombre&sortDir=asc" },
+    "first": { "href": "http://localhost:8080/api/productos?page=0&size=5&sortBy=nombre&sortDir=asc" },
+    "last": { "href": "http://localhost:8080/api/productos?page=2&size=5&sortBy=nombre&sortDir=asc" },
+    "next": { "href": "http://localhost:8080/api/productos?page=1&size=5&sortBy=nombre&sortDir=asc" }
+  },
+  "page": {
+    "size": 5,
+    "totalElements": 15,
+    "totalPages": 3,
+    "number": 0
+  }
+}
 ```
 
-### 2. Gestión de Productos (`/api/productos`)
-
 **Crear un Producto (POST)**
-```json
+```http
 POST /api/productos
+Authorization: Bearer <TU_TOKEN>
 Content-Type: application/json
 
 {
   "nombre": "Galletas de Chocolate",
   "precio": 2.50,
   "stock": 50,
-  "categoria": {
-    "id": 1
+  "categoria": { "id": 1 }
+}
+```
+
+**Eliminar un Producto (DELETE)**
+```http
+DELETE /api/productos/1
+Authorization: Bearer <TU_TOKEN>
+```
+**Respuesta JSON (HATEOAS en acción):**
+```json
+{
+  "message": "Producto eliminado exitosamente",
+  "_links": {
+    "allProductos": { "href": "http://localhost:8080/api/productos?page=0&size=10&sortBy=nombre&sortDir=asc" },
+    "addProducto": { "href": "http://localhost:8080/api/productos" }
   }
 }
 ```
 
-**Actualizar un Producto (PUT)**
-```json
-PUT /api/productos/1
-Content-Type: application/json
+### 3. Gestión de Usuarios
 
-{
-  "nombre": "Galletas de Chocolate Premium",
-  "precio": 3.00,
-  "stock": 45
-}
-```
-
-### 3. Gestión de Ventas (`/api/ventas`)
-
-*Nota: La venta descuenta automáticamente el stock y calcula el total basado en el precio real de la base de datos.*
-
-**Registrar una Venta (POST)**
-```json
-POST /api/ventas
-Content-Type: application/json
-
-{
-  "usuario": {
-    "id": 1
-  },
-  "fecha": "2023-10-25T14:30:00",
-  "detalles": [
-    {
-      "producto": {
-        "id": 1
-      },
-      "cantidad": 2
-    }
-  ]
-}
-```
-
-### 4. Categorías (`/api/categorias`)
-
-**Eliminar una Categoría (DELETE)**
+**Obtener un Usuario por ID (GET)**
 ```http
-DELETE /api/categorias/1
+GET /api/usuarios/1
+Authorization: Bearer <TU_TOKEN>
 ```
-*(Retorna HTTP 204 No Content si es exitoso, o 404 Not Found si el ID no existe).*
+
+---
+
+## Cobertura de Pruebas (CI/CD) 📊
+
+El proyecto cuenta con una cobertura de pruebas automatizadas superior al **80%** exigido.
+Para ejecutar la suite de pruebas completa y generar el reporte visual de JaCoCo:
+
+```bash
+.\mvnw test jacoco:report jacoco:check
+```
+
+Al finalizar, puedes revisar el reporte línea por línea abriendo:
+`target/site/jacoco/index.html` en tu navegador.
