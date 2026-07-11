@@ -14,8 +14,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,19 +45,20 @@ public class ProductoServiceImplTest {
     }
 
     @Test
-    public void testFindAll_RetornaListaDeProductos() {
-        // Arrange
-        List<Producto> lista = new ArrayList<>();
-        lista.add(productoMock);
-        when(productoRepository.findAll()).thenReturn(lista);
+    void findAll_ShouldReturnPagedProductos() {
+        Producto producto2 = new Producto();
+        producto2.setId(2L);
+        producto2.setNombre("Producto 2");
 
-        // Act
-        List<Producto> resultado = productoService.findAll();
+        Page<Producto> page = new org.springframework.data.domain.PageImpl<>(Arrays.asList(productoMock, producto2));
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        when(productoRepository.findAll(pageable)).thenReturn(page);
 
-        // Assert
-        assertNotNull(resultado);
-        assertEquals(1, resultado.size());
-        verify(productoRepository, times(1)).findAll();
+        Page<Producto> result = productoService.findAll(pageable);
+
+        assertNotNull(result);
+        assertEquals(2, result.getContent().size());
+        verify(productoRepository, times(1)).findAll(pageable);
     }
 
     @Test

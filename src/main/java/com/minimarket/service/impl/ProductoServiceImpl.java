@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 @Service
 public class ProductoServiceImpl implements ProductoService {
@@ -20,8 +21,8 @@ public class ProductoServiceImpl implements ProductoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Producto> findAll() {
-        return productoRepository.findAll();
+    public Page<Producto> findAll(org.springframework.data.domain.Pageable pageable) {
+        return productoRepository.findAll(pageable);
     }
 
     @Override

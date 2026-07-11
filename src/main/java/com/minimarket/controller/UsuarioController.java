@@ -21,6 +21,13 @@ import java.util.stream.Collectors;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.PagedModel.PageMetadata;
+
 @RestController
 @RequestMapping("/api/usuarios")
 @Tag(name = "Usuario", description = "API para gestionar usuarios del sistema")
@@ -30,19 +37,41 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping
-    @Operation(summary = "Obtener lista de usuarios", description = "Devuelve una lista de todos los usuarios")
+    @Operation(summary = "Obtener lista de usuarios", description = "Devuelve una lista paginada de todos los usuarios")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lista de usuarios obtenida exitosamente")
     })
-    public CollectionModel<EntityModel<Usuario>> listarUsuarios() {
-        List<EntityModel<Usuario>> usuarios = usuarioService.findAll().stream()
+    public ResponseEntity<PagedModel<EntityModel<Usuario>>> listarUsuarios(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "id") String sortBy,
+        @RequestParam(defaultValue = "asc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<Usuario> usuariosPage = usuarioService.findAll(pageable);
+        
+        List<EntityModel<Usuario>> usuariosModel = usuariosPage.getContent().stream()
                 .map(usuario -> EntityModel.of(usuario,
                         linkTo(methodOn(UsuarioController.class).obtenerUsuarioPorId(usuario.getId())).withSelfRel(),
                         linkTo(methodOn(UsuarioController.class).actualizarUsuario(usuario.getId(), usuario)).withRel("update"),
                         linkTo(methodOn(UsuarioController.class).eliminarUsuario(usuario.getId())).withRel("delete")))
                 .collect(Collectors.toList());
 
-        return CollectionModel.of(usuarios, linkTo(methodOn(UsuarioController.class).listarUsuarios()).withSelfRel());
+        PageMetadata metadata = new PageMetadata(usuariosPage.getSize(), usuariosPage.getNumber(), usuariosPage.getTotalElements(), usuariosPage.getTotalPages());
+        PagedModel<EntityModel<Usuario>> pagedModel = PagedModel.of(usuariosModel, metadata);
+        
+        pagedModel.add(linkTo(methodOn(UsuarioController.class).listarUsuarios(page, size, sortBy, sortDir)).withSelfRel());
+        
+        if (usuariosPage.hasPrevious()) {
+            pagedModel.add(linkTo(methodOn(UsuarioController.class).listarUsuarios(usuariosPage.getNumber() - 1, size, sortBy, sortDir)).withRel("prev"));
+        }
+        if (usuariosPage.hasNext()) {
+            pagedModel.add(linkTo(methodOn(UsuarioController.class).listarUsuarios(usuariosPage.getNumber() + 1, size, sortBy, sortDir)).withRel("next"));
+        }
+
+        return ResponseEntity.ok(pagedModel);
     }
 
     @GetMapping("/{id}")
@@ -56,7 +85,7 @@ public class UsuarioController {
         return usuario.map(u -> {
             EntityModel<Usuario> model = EntityModel.of(u,
                     linkTo(methodOn(UsuarioController.class).obtenerUsuarioPorId(id)).withSelfRel(),
-                    linkTo(methodOn(UsuarioController.class).listarUsuarios()).withRel("allUsuarios"),
+                    linkTo(methodOn(UsuarioController.class).listarUsuarios(0, 10, "id", "asc")).withRel("allUsuarios"),
                     linkTo(methodOn(UsuarioController.class).actualizarUsuario(id, u)).withRel("update"),
                     linkTo(methodOn(UsuarioController.class).eliminarUsuario(id)).withRel("delete"));
             return ResponseEntity.ok(model);
@@ -72,7 +101,7 @@ public class UsuarioController {
         Usuario nuevoUsuario = usuarioService.save(usuario);
         EntityModel<Usuario> model = EntityModel.of(nuevoUsuario,
                 linkTo(methodOn(UsuarioController.class).obtenerUsuarioPorId(nuevoUsuario.getId())).withSelfRel(),
-                linkTo(methodOn(UsuarioController.class).listarUsuarios()).withRel("allUsuarios"),
+                linkTo(methodOn(UsuarioController.class).listarUsuarios(0, 10, "id", "asc")).withRel("allUsuarios"),
                 linkTo(methodOn(UsuarioController.class).actualizarUsuario(nuevoUsuario.getId(), nuevoUsuario)).withRel("update"),
                 linkTo(methodOn(UsuarioController.class).eliminarUsuario(nuevoUsuario.getId())).withRel("delete"));
         return ResponseEntity.ok(model);
@@ -91,7 +120,7 @@ public class UsuarioController {
             Usuario actualizado = usuarioService.save(usuario);
             EntityModel<Usuario> model = EntityModel.of(actualizado,
                     linkTo(methodOn(UsuarioController.class).obtenerUsuarioPorId(id)).withSelfRel(),
-                    linkTo(methodOn(UsuarioController.class).listarUsuarios()).withRel("allUsuarios"),
+                    linkTo(methodOn(UsuarioController.class).listarUsuarios(0, 10, "id", "asc")).withRel("allUsuarios"),
                     linkTo(methodOn(UsuarioController.class).eliminarUsuario(id)).withRel("delete"));
             return ResponseEntity.ok(model);
         }
@@ -109,7 +138,7 @@ public class UsuarioController {
         if (usuario.isPresent()) {
             usuarioService.deleteById(id);
             EntityModel<Map<String, String>> responseModel = EntityModel.of(Map.of("message", "Usuario eliminado exitosamente"),
-                linkTo(methodOn(UsuarioController.class).listarUsuarios()).withRel("allUsuarios"),
+                linkTo(methodOn(UsuarioController.class).listarUsuarios(0, 10, "id", "asc")).withRel("allUsuarios"),
                 linkTo(methodOn(UsuarioController.class).guardarUsuario(new Usuario())).withRel("addUsuario")
             );
             return ResponseEntity.ok(responseModel);

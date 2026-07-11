@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,15 +80,17 @@ public class UsuarioServiceImplTest {
     public void testFindAll_RetornaListaDeUsuarios() {
         // Arrange
         List<Usuario> listaMock = List.of(usuarioMock);
-        when(usuarioRepository.findAll()).thenReturn(listaMock);
+        Page<Usuario> pageMock = new org.springframework.data.domain.PageImpl<>(listaMock);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        when(usuarioRepository.findAll(pageable)).thenReturn(pageMock);
 
         // Act
-        List<Usuario> resultado = usuarioService.findAll();
+        Page<Usuario> resultado = usuarioService.findAll(pageable);
 
         // Assert
         assertNotNull(resultado);
-        assertEquals(1, resultado.size());
-        verify(usuarioRepository, times(1)).findAll();
+        assertEquals(1, resultado.getContent().size());
+        verify(usuarioRepository, times(1)).findAll(pageable);
     }
 
     @Test

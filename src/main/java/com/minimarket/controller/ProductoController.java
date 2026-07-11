@@ -22,6 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.hateoas.PagedModel.PageMetadata;
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
@@ -35,19 +42,44 @@ public class ProductoController {
 
   @GetMapping
   @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'CAJERO', 'CLIENTE')")
-  @Operation(summary = "Obtener lista de productos", description = "Devuelve una lista de todos los productos disponibles en el sistema. Requiere autenticación.")
+  @Operation(summary = "Obtener lista de productos", description = "Devuelve una lista paginada de todos los productos disponibles en el sistema. Requiere autenticación.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente")
+      @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoPageResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
-  public CollectionModel<EntityModel<Producto>> listarTodos() {
-    List<EntityModel<Producto>> productos = productoService.findAll().stream()
+  public ResponseEntity<PagedModel<EntityModel<Producto>>> listarTodos(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size,
+    @RequestParam(defaultValue = "nombre") String sortBy,
+    @RequestParam(defaultValue = "asc") String sortDir
+  ) {
+    Sort sort = sortDir.equalsIgnoreCase("asc") 
+    ? Sort.by(sortBy).ascending() 
+    : Sort.by(sortBy).descending();
+    
+    Pageable pageable = PageRequest.of(page, size, sort);
+    
+    Page<Producto> productosPage = productoService.findAll(pageable);
+    List<EntityModel<Producto>> productosModel = productosPage.getContent().stream()
             .map(producto -> EntityModel.of(producto,
-                    linkTo(methodOn(ProductoController.class).listarTodos()).withRel("allProductos"),
+                    linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withRel("allProductos"),
                     linkTo(methodOn(ProductoController.class).actualizarProducto(producto.getId(), producto)).withRel("update"),
                     linkTo(methodOn(ProductoController.class).eliminarProducto(producto.getId())).withRel("delete")))
             .collect(Collectors.toList());
-    return CollectionModel.of(productos, linkTo(methodOn(ProductoController.class).listarTodos()).withSelfRel());
+            
+    PageMetadata metadata = new PageMetadata(productosPage.getSize(), productosPage.getNumber(), productosPage.getTotalElements(), productosPage.getTotalPages());
+    PagedModel<EntityModel<Producto>> pagedModel = PagedModel.of(productosModel, metadata);
+    
+    pagedModel.add(linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withSelfRel());
+    
+    if (productosPage.hasPrevious()) {
+        pagedModel.add(linkTo(methodOn(ProductoController.class).listarTodos(productosPage.getNumber() - 1, size, sortBy, sortDir)).withRel("prev"));
+    }
+    if (productosPage.hasNext()) {
+        pagedModel.add(linkTo(methodOn(ProductoController.class).listarTodos(productosPage.getNumber() + 1, size, sortBy, sortDir)).withRel("next"));
+    }
+    
+    return ResponseEntity.ok(pagedModel);
   }
 
   @PostMapping
@@ -60,7 +92,7 @@ public class ProductoController {
   public ResponseEntity<EntityModel<Producto>> crearProducto(@RequestBody Producto producto) {
     Producto guardado = productoService.save(producto);
     EntityModel<Producto> model = EntityModel.of(guardado,
-            linkTo(methodOn(ProductoController.class).listarTodos()).withRel("allProductos"),
+            linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             linkTo(methodOn(ProductoController.class).actualizarProducto(guardado.getId(), guardado)).withRel("update"),
             linkTo(methodOn(ProductoController.class).eliminarProducto(guardado.getId())).withRel("delete"));
     return ResponseEntity.ok(model);
@@ -79,7 +111,7 @@ public class ProductoController {
     Producto actualizado = productoService.save(producto);
     EntityModel<Producto> model = EntityModel.of(actualizado,
             linkTo(methodOn(ProductoController.class).actualizarProducto(id, actualizado)).withSelfRel(),
-            linkTo(methodOn(ProductoController.class).listarTodos()).withRel("allProductos"),
+            linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
     return ResponseEntity.ok(model);
   }
@@ -94,7 +126,7 @@ public class ProductoController {
   public ResponseEntity<EntityModel<Map<String, String>>> eliminarProducto(@PathVariable Long id) {
     productoService.deleteById(id);
     EntityModel<Map<String, String>> responseModel = EntityModel.of(Map.of("message", "Producto eliminado exitosamente"),
-        linkTo(methodOn(ProductoController.class).listarTodos()).withRel("allProductos"),
+        linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
         linkTo(methodOn(ProductoController.class).crearProducto(new Producto())).withRel("addProducto")
     );
     return ResponseEntity.ok(responseModel);
