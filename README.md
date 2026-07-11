@@ -72,11 +72,6 @@ Para obtener el token JWT necesario para las demás operaciones.
 POST /api/auth/login
 Content-Type: application/json
 
-{
-  "username": "admin",
-  "password": "password"
-}
-```
 
 ### 2. Gestión de Productos (Paginado + HATEOAS)
 
