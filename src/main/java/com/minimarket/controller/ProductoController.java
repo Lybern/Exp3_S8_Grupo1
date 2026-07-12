@@ -4,12 +4,17 @@ import com.minimarket.entity.Producto;
 import com.minimarket.service.ProductoService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import jakarta.validation.Valid;
+import com.minimarket.dto.ErrorResponseDTO;
+import com.minimarket.dto.ProductoRequestDTO;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
@@ -48,10 +53,10 @@ public class ProductoController {
   })
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<PagedModel<EntityModel<com.minimarket.dto.ProductoResponseDTO>>> listarTodos(
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size,
-    @RequestParam(defaultValue = "nombre") String sortBy,
-    @RequestParam(defaultValue = "asc") String sortDir
+    @Parameter(description = "Número de página (0-indexed)") @RequestParam(defaultValue = "0") int page,
+    @Parameter(description = "Tamaño de la página") @RequestParam(defaultValue = "10") int size,
+    @Parameter(description = "Campo de ordenamiento") @RequestParam(defaultValue = "nombre") String sortBy,
+    @Parameter(description = "Dirección de ordenamiento (asc o desc)") @RequestParam(defaultValue = "asc") String sortDir
   ) {
     Sort sort = sortDir.equalsIgnoreCase("asc") 
     ? Sort.by(sortBy).ascending() 
@@ -66,7 +71,7 @@ public class ProductoController {
             .map(producto -> EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(producto),
                     linkTo(methodOn(ProductoController.class).obtenerProductoPorId(producto.getId())).withSelfRel(),
                     linkTo(methodOn(ProductoController.class).listarTodos(page, size, sortBy, sortDir)).withRel("allProductos"),
-                    linkTo(methodOn(ProductoController.class).actualizarProducto(producto.getId(), producto)).withRel("update"),
+                    linkTo(methodOn(ProductoController.class).actualizarProducto(producto.getId(), null)).withRel("update"),
                     linkTo(methodOn(ProductoController.class).eliminarProducto(producto.getId())).withRel("delete")))
             .collect(Collectors.toList());
             
@@ -96,11 +101,12 @@ public class ProductoController {
   @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'CAJERO', 'CLIENTE')")
   @Operation(summary = "Obtener producto por ID", description = "Devuelve los detalles de un producto específico.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Producto encontrado"),
-      @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+      @ApiResponse(responseCode = "200", description = "Producto encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class))),
+      @ApiResponse(responseCode = "404", description = "Producto con el ID especificado no fue encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> obtenerProductoPorId(@PathVariable Long id) {
+  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> obtenerProductoPorId(
+          @Parameter(description = "ID único del producto") @PathVariable Long id) {
       Producto p = productoService.findById(id);
       
       // Si el producto existe, lo transformamos a DTO y le inyectamos sus enlaces dinámicos
@@ -108,7 +114,7 @@ public class ProductoController {
           EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(com.minimarket.dto.ProductoResponseDTO.from(p),
                   linkTo(methodOn(ProductoController.class).obtenerProductoPorId(id)).withSelfRel(),
                   linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
-                  linkTo(methodOn(ProductoController.class).actualizarProducto(id, p)).withRel("update"),
+                  linkTo(methodOn(ProductoController.class).actualizarProducto(id, null)).withRel("update"),
                   linkTo(methodOn(ProductoController.class).eliminarProducto(id)).withRel("delete"));
           return ResponseEntity.ok(model);
       }
@@ -121,11 +127,12 @@ public class ProductoController {
   @PreAuthorize("hasRole('ADMINISTRADOR')")
   @Operation(summary = "Agregar un nuevo producto", description = "Crea un nuevo producto en el sistema y devuelve los detalles del producto creado.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "201", description = "Producto creado exitosamente")
+      @ApiResponse(responseCode = "201", description = "Producto creado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> crearProducto(@RequestBody Producto producto) {
-    Producto guardado = productoService.save(producto);
+  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> crearProducto(
+          @Valid @RequestBody ProductoRequestDTO productoDTO) {
+    Producto guardado = productoService.save(productoDTO.toEntity());
     
     // =========================================================================================
     // HATEOAS A NIVEL DE CREACIÓN (POST):
@@ -140,28 +147,33 @@ public class ProductoController {
     EntityModel<com.minimarket.dto.ProductoResponseDTO> model = EntityModel.of(
             com.minimarket.dto.ProductoResponseDTO.from(guardado), // 1. Protegemos la entidad inyectando el DTO
             
+            linkTo(methodOn(ProductoController.class).obtenerProductoPorId(guardado.getId())).withSelfRel(),
+
             // 2. Enlace hacia la lista completa de productos.
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
             
             // 3. Enlace con la operación HTTP PUT que permitiría actualizar este recurso recién creado.
-            linkTo(methodOn(ProductoController.class).actualizarProducto(guardado.getId(), guardado)).withRel("update"),
+            linkTo(methodOn(ProductoController.class).actualizarProducto(guardado.getId(), null)).withRel("update"),
             
             // 4. Enlace con la operación HTTP DELETE que permitiría destruir este recurso.
             linkTo(methodOn(ProductoController.class).eliminarProducto(guardado.getId())).withRel("delete")
     );
             
-    return ResponseEntity.ok(model);
+    return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(model);
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasRole('ADMINISTRADOR')")
   @Operation(summary = "Actualizar un producto existente", description = "Actualiza los detalles de un producto existente según su ID.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
-      @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+      @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class))),
+      @ApiResponse(responseCode = "404", description = "Producto con el ID especificado no fue encontrado para actualizar", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> actualizarProducto(@PathVariable Long id, @RequestBody Producto producto) {
+  public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> actualizarProducto(
+          @Parameter(description = "ID único del producto a actualizar") @PathVariable Long id, 
+          @Valid @RequestBody ProductoRequestDTO productoDTO) {
+    Producto producto = productoDTO.toEntity();
     producto.setId(id);
     Producto actualizado = productoService.save(producto);
     
@@ -176,7 +188,7 @@ public class ProductoController {
             
             // withSelfRel(): Es un estándar REST. Etiqueta automáticamente el enlace como "self", indicando
             // que esta es la URL de autoridad para el estado actual de este recurso.
-            linkTo(methodOn(ProductoController.class).actualizarProducto(id, actualizado)).withSelfRel(),
+            linkTo(methodOn(ProductoController.class).actualizarProducto(id, null)).withSelfRel(),
             
             // Navegación hacia recursos hermanos (volver a la lista completa).
             linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
@@ -192,11 +204,12 @@ public class ProductoController {
   @PreAuthorize("hasRole('ADMINISTRADOR')")
   @Operation(summary = "Eliminar un producto", description = "Elimina un producto del sistema según su ID.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente"),
-      @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+      @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente", content = @Content(mediaType = "application/json")),
+      @ApiResponse(responseCode = "404", description = "Producto con el ID especificado no fue encontrado para eliminar", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
-  public ResponseEntity<EntityModel<Map<String, String>>> eliminarProducto(@PathVariable Long id) {
+  public ResponseEntity<EntityModel<Map<String, String>>> eliminarProducto(
+          @Parameter(description = "ID único del producto a eliminar") @PathVariable Long id) {
     Producto existente = productoService.findById(id);
     if (existente == null) {
         return ResponseEntity.notFound().build();
@@ -220,7 +233,7 @@ public class ProductoController {
         linkTo(methodOn(ProductoController.class).listarTodos(0, 10, "nombre", "asc")).withRel("allProductos"),
         
         // Le enseña al cliente cuál es el endpoint (POST) para crear registros
-        linkTo(methodOn(ProductoController.class).crearProducto(new Producto())).withRel("addProducto")
+        linkTo(methodOn(ProductoController.class).crearProducto(null)).withRel("addProducto")
     );
     
     return ResponseEntity.ok(responseModel);

@@ -62,7 +62,7 @@ public class InventarioController {
     @PostMapping
     @Operation(summary = "Registrar movimiento", description = "Registra una entrada de mercadería o auditoría")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Movimiento registrado exitosamente")
+        @ApiResponse(responseCode = "201", description = "Movimiento registrado exitosamente")
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<EntityModel<Inventario>> registrarMovimiento(@RequestBody Inventario inventario) {
@@ -70,6 +70,6 @@ public class InventarioController {
         EntityModel<Inventario> model = EntityModel.of(guardado,
                 linkTo(methodOn(InventarioController.class).listarPorProducto(guardado.getProducto().getId())).withRel("por-producto"),
                 linkTo(methodOn(InventarioController.class).listarMovimientos()).withRel("inventarios"));
-        return ResponseEntity.ok(model);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(model);
     }
 }
