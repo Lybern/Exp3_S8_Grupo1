@@ -32,8 +32,8 @@ Esta semana el proyecto evolucionó hacia una arquitectura completamente documen
 3. **Implementación segura mediante DTOs:** 
    Para evitar que la lógica interna de HATEOAS o las relaciones ORM se filtren, se implementaron **Data Transfer Objects** (Ej: `ProductoResponseDTO`). Gracias a esto, el JSON final es purificado, eliminando campos nulos mediante `@JsonInclude(NON_NULL)` y renombrando las colecciones semánticamente (`productoList`) a través de `@Relation`.
 
-4. **Refactorización:** 
-   Los Controladores fueron enriquecidos con comentarios pedagógicos línea a línea (explicando `linkTo`, `methodOn` y `withRel`) demostrando un dominio profesional del framework.
+4. **Refactorización Global (Arquitectura DTO y Manejo de Errores):** 
+   Se estandarizó toda la capa de controladores (`Inventario`, `Venta`, `Categoria`, `Usuario`, etc.) para que ninguna entidad de base de datos sea expuesta directamente, utilizando estrictamente DTOs. Además, se configuró documentación global en OpenAPI para responder uniformemente ante errores de validación (`400 Bad Request`) o errores de servidor (`500 Internal Server Error`) con un esquema genérico (`ErrorResponseDTO`), cumpliendo el más alto estándar empresarial.
 
 ---
 
