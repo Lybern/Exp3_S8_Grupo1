@@ -1,5 +1,11 @@
 package com.minimarket.controller;
 
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import com.minimarket.dto.ErrorResponseDTO;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -33,6 +39,11 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/auth")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Auth", description = "API de AutenticaciÃ³n")
+@ApiResponses({
+    @ApiResponse(responseCode = "400", description = "Error de validaciÃ³n o solicitud incorrecta", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class))),
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+})
 public class AuthController {
 
     private final UsuarioService usuarioService;
@@ -59,7 +70,9 @@ public class AuthController {
     }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-   @PostMapping("/registro-interno")
+   @io.swagger.v3.oas.annotations.Operation(summary="Registro interno")
+    @ApiResponse(responseCode="200", description="Registrado", content=@Content(mediaType="application/json"))
+    @PostMapping("/registro-interno")
     public ResponseEntity<?> registroInterno(@RequestBody RegisterRequest request) {
 
         // Validaciones básicas de nulidad
@@ -104,6 +117,8 @@ public class AuthController {
 
 
     // Endpoint para registro público (clientes), define el rol por defecto.
+    @io.swagger.v3.oas.annotations.Operation(summary="Registro pÃºblico")
+    @ApiResponse(responseCode="200", description="Registrado", content=@Content(mediaType="application/json"))
     @PostMapping("/register")
     public ResponseEntity<?> publicRegister(@RequestBody PublicRegisterRequest request) {
 
@@ -144,6 +159,8 @@ public class AuthController {
 
 
     // Endpoint para login, con protección contra ataques de fuerza bruta.
+    @io.swagger.v3.oas.annotations.Operation(summary="Iniciar sesiÃ³n")
+    @ApiResponse(responseCode="200", description="Login exitoso", content=@Content(mediaType="application/json"))
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
 

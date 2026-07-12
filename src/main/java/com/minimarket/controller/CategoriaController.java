@@ -22,6 +22,10 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/categorias")
 @Tag(name = "Categoria", description = "API para gestionar categorías")
+@ApiResponses({
+    @ApiResponse(responseCode = "400", description = "Error de validaciÃ³n o solicitud incorrecta", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class))),
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
+})
 public class CategoriaController {
     @Autowired
     private CategoriaService categoriaService;
