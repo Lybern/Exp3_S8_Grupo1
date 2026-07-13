@@ -39,9 +39,9 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/auth")
-@io.swagger.v3.oas.annotations.tags.Tag(name = "Auth", description = "API de AutenticaciÃ³n")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Auth", description = "API de Autenticación")
 @ApiResponses({
-    @ApiResponse(responseCode = "400", description = "Error de validaciÃ³n o solicitud incorrecta", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class))),
+    @ApiResponse(responseCode = "400", description = "Error de validación o solicitud incorrecta", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class))),
     @ApiResponse(responseCode = "500", description = "Error interno del servidor", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
 })
 public class AuthController {
@@ -70,7 +70,7 @@ public class AuthController {
     }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-   @io.swagger.v3.oas.annotations.Operation(summary="Registro interno")
+    @io.swagger.v3.oas.annotations.Operation(summary="Registro interno")
     @ApiResponse(responseCode="200", description="Registrado", content=@Content(mediaType="application/json"))
     @PostMapping("/registro-interno")
     public ResponseEntity<?> registroInterno(@RequestBody RegisterRequest request) {
@@ -117,7 +117,7 @@ public class AuthController {
 
 
     // Endpoint para registro público (clientes), define el rol por defecto.
-    @io.swagger.v3.oas.annotations.Operation(summary="Registro pÃºblico")
+    @io.swagger.v3.oas.annotations.Operation(summary="Registro público")
     @ApiResponse(responseCode="200", description="Registrado", content=@Content(mediaType="application/json"))
     @PostMapping("/register")
     public ResponseEntity<?> publicRegister(@RequestBody PublicRegisterRequest request) {

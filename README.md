@@ -6,7 +6,7 @@ El proyecto destaca por su alto nivel de madurez técnica, incorporando estánda
 
 ---
 
-## Tecnologías Principales 🚀
+## Tecnologías principales 
 - **Java 20**
 - **Spring Boot 3 / 4.x**
 - **Spring Data JPA** (Persistencia y ORM)
@@ -19,7 +19,7 @@ El proyecto destaca por su alto nivel de madurez técnica, incorporando estánda
 
 ---
 
-## Implementación de HATEOAS para cumplir requerimientos de la semana 8 🌟
+## Implementación de HATEOAS para cumplir requerimientos de la semana 8 
 
 Esta semana el proyecto evolucionó hacia una arquitectura completamente documentada:
 
@@ -37,7 +37,7 @@ Esta semana el proyecto evolucionó hacia una arquitectura completamente documen
 
 ---
 
-## Ejecución del Proyecto ⚙️
+## Ejecución del proyecto ⚙️
 
 ### Requisitos previos
 - Tener JDK 20 instalado en el equipo.

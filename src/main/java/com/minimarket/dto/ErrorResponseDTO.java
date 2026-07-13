@@ -5,10 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Modelo estandarizado para respuestas de error de la API")
 public class ErrorResponseDTO {
 
-    @Schema(description = "Código de estado HTTP", example = "404")
+    @Schema(description = "Código de estado HTTP", example = "400")
     private int status;
 
-    @Schema(description = "Mensaje descriptivo del error", example = "El recurso solicitado no fue encontrado en el sistema.")
+    @Schema(description = "Mensaje descriptivo del error", example = "Error de validación o recurso no encontrado.")
     private String message;
 
     @Schema(description = "Timestamp del error en milisegundos", example = "1719827364812")
