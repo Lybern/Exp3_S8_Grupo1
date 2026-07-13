@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -144,7 +145,16 @@ public class UsuarioController {
                 description = "Devuelve los detalles de un usuario específico"
         )
         @ApiResponses(value = {
-                @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioResponseDTO.class))),
+                @ApiResponse(responseCode = "200", description = "Usuario encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "username": "admin",
+  "roles": ["ADMINISTRADOR"],
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/usuarios/1" }
+  }
+}
+"""))),
                 @ApiResponse(responseCode = "404", description = "Usuario con el ID especificado no fue encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
         })
         public ResponseEntity<EntityModel<UsuarioResponseDTO>> obtenerUsuarioPorId(
@@ -187,7 +197,16 @@ public class UsuarioController {
                 @ApiResponse(
                         responseCode = "201",
                         description = "Usuario creado exitosamente",
-                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioResponseDTO.class))
+                        content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "username": "admin",
+  "roles": ["ADMINISTRADOR"],
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/usuarios/1" }
+  }
+}
+"""))
                 )
         })
         public ResponseEntity<EntityModel<UsuarioResponseDTO>> guardarUsuario(
@@ -224,7 +243,16 @@ public class UsuarioController {
                 description = "Actualiza los datos de un usuario existente"
         )
         @ApiResponses(value = {
-                @ApiResponse(responseCode = "200", description = "Usuario actualizado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioResponseDTO.class))),
+                @ApiResponse(responseCode = "200", description = "Usuario actualizado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "username": "admin",
+  "roles": ["ADMINISTRADOR"],
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/usuarios/1" }
+  }
+}
+"""))),
                 @ApiResponse(responseCode = "404", description = "Usuario con el ID especificado no fue encontrado para actualizar", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
         })
         public ResponseEntity<EntityModel<UsuarioResponseDTO>> actualizarUsuario(

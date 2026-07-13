@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +35,16 @@ public class DetalleCarritoController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Actualizar cantidad de un item")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Cantidad actualizada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DetalleCarritoResponseDTO.class)))
+        @ApiResponse(responseCode = "200", description = "Cantidad actualizada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DetalleCarritoResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "cantidad": 2,
+  "productoNombre": "Ejemplo",
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/carrito/detalle/1" }
+  }
+}
+""")))
     })
     public ResponseEntity<DetalleCarritoResponseDTO> actualizarCantidad(
             @Parameter(description = "ID del detalle") @PathVariable Long id,

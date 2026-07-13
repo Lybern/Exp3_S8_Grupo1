@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -105,7 +106,18 @@ public class ProductoController {
   @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'CAJERO', 'CLIENTE')")
   @Operation(summary = "Obtener producto por ID", description = "Devuelve los detalles de un producto específico.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Producto encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class))),
+      @ApiResponse(responseCode = "200", description = "Producto encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "nombre": "Producto Ejemplo",
+  "precio": 1000.0,
+  "stock": 50,
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/productos/1" },
+    "allProductos": { "href": "http://localhost:8080/api/productos?page=0&size=10" }
+  }
+}
+"""))),
       @ApiResponse(responseCode = "404", description = "Producto con el ID especificado no fue encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")
@@ -131,7 +143,18 @@ public class ProductoController {
   @PreAuthorize("hasRole('ADMINISTRADOR')")
   @Operation(summary = "Agregar un nuevo producto", description = "Crea un nuevo producto en el sistema y devuelve los detalles del producto creado.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "201", description = "Producto creado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class)))
+      @ApiResponse(responseCode = "201", description = "Producto creado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "nombre": "Producto Ejemplo",
+  "precio": 1000.0,
+  "stock": 50,
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/productos/1" },
+    "allProductos": { "href": "http://localhost:8080/api/productos?page=0&size=10" }
+  }
+}
+""")))
   })
   @SecurityRequirement(name = "bearerAuth")
   public ResponseEntity<EntityModel<com.minimarket.dto.ProductoResponseDTO>> crearProducto(
@@ -170,7 +193,18 @@ public class ProductoController {
   @PreAuthorize("hasRole('ADMINISTRADOR')")
   @Operation(summary = "Actualizar un producto existente", description = "Actualiza los detalles de un producto existente según su ID.")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class))),
+      @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.minimarket.dto.ProductoResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "nombre": "Producto Ejemplo",
+  "precio": 1000.0,
+  "stock": 50,
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/productos/1" },
+    "allProductos": { "href": "http://localhost:8080/api/productos?page=0&size=10" }
+  }
+}
+"""))),
       @ApiResponse(responseCode = "404", description = "Producto con el ID especificado no fue encontrado para actualizar", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
   })
   @SecurityRequirement(name = "bearerAuth")

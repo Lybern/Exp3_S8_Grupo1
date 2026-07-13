@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -73,7 +74,17 @@ public class InventarioController {
     @PostMapping
     @Operation(summary = "Registrar movimiento", description = "Registra una entrada de mercadería o auditoría")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Movimiento registrado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = InventarioResponseDTO.class)))
+        @ApiResponse(responseCode = "201", description = "Movimiento registrado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = InventarioResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "productoId": 1,
+  "cantidad": 50,
+  "tipoMovimiento": "ENTRADA",
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/inventario/1" }
+  }
+}
+""")))
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<EntityModel<InventarioResponseDTO>> registrarMovimiento(@Valid @RequestBody InventarioRequestDTO dto) {

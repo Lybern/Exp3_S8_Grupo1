@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +43,16 @@ public class CategoriaController {
     @GetMapping("/{id}")
     @Operation(summary = "Obtener categoría por ID")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Categoría encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoriaResponseDTO.class))),
+        @ApiResponse(responseCode = "200", description = "Categoría encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoriaResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "nombre": "Abarrotes",
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/categorias/1" },
+    "allCategorias": { "href": "http://localhost:8080/api/categorias" }
+  }
+}
+"""))),
         @ApiResponse(responseCode = "404", description = "Categoría no encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     public ResponseEntity<CategoriaResponseDTO> obtenerCategoriaPorId(@Parameter(description = "ID de la categoría") @PathVariable Long id) {
@@ -53,7 +63,16 @@ public class CategoriaController {
     @PostMapping
     @Operation(summary = "Crear categoría")
     @ApiResponses({
-        @ApiResponse(responseCode = "201", description = "Categoría creada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoriaResponseDTO.class)))
+        @ApiResponse(responseCode = "201", description = "Categoría creada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoriaResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "nombre": "Abarrotes",
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/categorias/1" },
+    "allCategorias": { "href": "http://localhost:8080/api/categorias" }
+  }
+}
+""")))
     })
     public ResponseEntity<CategoriaResponseDTO> guardarCategoria(@Valid @RequestBody CategoriaRequestDTO dto) {
         Categoria guardada = categoriaService.save(dto.toEntity());
@@ -63,7 +82,16 @@ public class CategoriaController {
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar categoría")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Categoría actualizada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoriaResponseDTO.class))),
+        @ApiResponse(responseCode = "200", description = "Categoría actualizada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CategoriaResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "nombre": "Abarrotes",
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/categorias/1" },
+    "allCategorias": { "href": "http://localhost:8080/api/categorias" }
+  }
+}
+"""))),
         @ApiResponse(responseCode = "404", description = "Categoría no encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     public ResponseEntity<CategoriaResponseDTO> actualizarCategoria(@Parameter(description = "ID de la categoría") @PathVariable Long id, @Valid @RequestBody CategoriaRequestDTO dto) {

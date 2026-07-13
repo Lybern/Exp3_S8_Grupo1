@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +38,16 @@ public class VentaController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Procesar venta desde carrito")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Venta exitosa", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VentaResponseDTO.class)))
+        @ApiResponse(responseCode = "200", description = "Venta exitosa", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VentaResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "total": 5000.0,
+  "usuarioId": 1,
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/ventas/1" }
+  }
+}
+""")))
     })
     public ResponseEntity<VentaResponseDTO> procesarVentaDesdeCarrito(@Parameter(description = "ID del usuario") @PathVariable Long usuarioId) {
         Venta venta = ventaService.crearVentaDesdeCarrito(usuarioId);
@@ -49,7 +59,16 @@ public class VentaController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Obtener venta por ID")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Venta encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VentaResponseDTO.class))),
+        @ApiResponse(responseCode = "200", description = "Venta encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = VentaResponseDTO.class), examples = @ExampleObject(value = """
+{
+  "id": 1,
+  "total": 5000.0,
+  "usuarioId": 1,
+  "_links": {
+    "self": { "href": "http://localhost:8080/api/ventas/1" }
+  }
+}
+"""))),
         @ApiResponse(responseCode = "404", description = "Venta no encontrada", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     public ResponseEntity<VentaResponseDTO> obtenerPorId(@Parameter(description = "ID de la venta") @PathVariable Long id) {
