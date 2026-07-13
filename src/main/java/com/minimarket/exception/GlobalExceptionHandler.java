@@ -1,7 +1,6 @@
 package com.minimarket.exception;
 
-import java.time.LocalDateTime;
-
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,115 +18,103 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import com.minimarket.dto.ErrorResponseDTO; // <-- IMPORTANTE: Importamos tu DTO real
 import com.minimarket.security.monitor.SuspiciousActivityService;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-// @RestControllerAdvice indica que esta clase interceptará las excepciones lanzadas por
-// cualquier controlador en toda la aplicación y devolverá las respuestas directamente en formato JSON.
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // Instancia del logger para guardar un registro interno de los errores sin exponerlos al cliente.
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @Autowired
     private SuspiciousActivityService suspiciousActivityService;
 
-    // Maneja errores de recursos no encontrados (Ej: cuando se busca un usuario que no existe). Devuelve un 404.
+    // 1. Recursos no encontrados (404)
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(NotFoundException ex, WebRequest req) {
-        String path = req != null ? req.getDescription(false) : "Desconocido";
-        log.warn("Recurso no encontrado: {} - URI: {}", ex.getMessage(), path);
-        ErrorResponse body = new ErrorResponse(
-                ex.getMessage(),
+    public ResponseEntity<ErrorResponseDTO> handleNotFound(NotFoundException ex) {
+        log.warn("Recurso no encontrado: {}", ex.getMessage());
+        
+        ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.NOT_FOUND.value(),
-                path,
-                LocalDateTime.now()
+                ex.getMessage(),
+                System.currentTimeMillis() // Pasamos el long en milisegundos que pide el DTO
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(body);
     }
 
-    // Maneja errores por peticiones incorrectas (Ej: si el usuario envía datos erróneos). Devuelve un 400.
+    // 2. Peticiones incorrectas (400)
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorResponse> handleBadRequest(BadRequestException ex, WebRequest req) {
-        String path = req != null ? req.getDescription(false) : "Desconocido";
-        log.warn("Petición incorrecta (Bad Request): {} - URI: {}", ex.getMessage(), path);
-        ErrorResponse body = new ErrorResponse(
-                ex.getMessage(),
+    public ResponseEntity<ErrorResponseDTO> handleBadRequest(BadRequestException ex) {
+        log.warn("Petición incorrecta (Bad Request): {}", ex.getMessage());
+        
+        ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.BAD_REQUEST.value(),
-                path,
-                LocalDateTime.now()
+                ex.getMessage(),
+                System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
-    // Intercepta fallos de autenticación (Ej: contraseña incorrecta al hacer login). Devuelve un 401.
+    // 3. Fallos de login (401)
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex, WebRequest req) {
+    public ResponseEntity<ErrorResponseDTO> handleBadCredentials(BadCredentialsException ex, WebRequest req) {
         log.warn("Authentication failed: {}", ex.getMessage());
         
-        // Registra la actividad sospechosa si el intento provino de una petición HTTP
         if (req instanceof ServletWebRequest) {
             HttpServletRequest httpReq = ((ServletWebRequest) req).getRequest();
             suspiciousActivityService.recordFailedLogin(httpReq, null);
         }
-        
-        String path = req != null ? req.getDescription(false) : "Desconocido";
 
-        ErrorResponse body = new ErrorResponse(
-                "Invalid username or password",
+        ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.UNAUTHORIZED.value(),
-                path,
-                LocalDateTime.now()
+                "Username o contraseña incorrectos.",
+                System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
     }
 
-    // Maneja los bloqueos de seguridad cuando un usuario autenticado intenta acceder a un recurso sin los roles necesarios. Devuelve un 403.
+    // 4. Cuentas bloqueadas (423)
     @ExceptionHandler(AccountBlockedException.class)
-    public ResponseEntity<ErrorResponse> handleAccountBlocked(AccountBlockedException ex, WebRequest req) {
-        String path = req != null ? req.getDescription(false) : "Desconocido";
+    public ResponseEntity<ErrorResponseDTO> handleAccountBlocked(AccountBlockedException ex) {
         log.warn("Account blocked: {}", ex.getMessage());
-        ErrorResponse body = new ErrorResponse(
+        
+        ErrorResponseDTO body = new ErrorResponseDTO(
+                423, // Locked
                 ex.getMessage(),
-                423, // 423 Locked
-                path,
-                LocalDateTime.now()
+                System.currentTimeMillis()
         );
         return ResponseEntity.status(423).body(body);
     }
 
+    // 5. Accesos denegados por falta de roles (403)
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, WebRequest req) {
-        String path = req != null ? req.getDescription(false) : "Desconocido";
-        log.warn("Acceso denegado (403): Intento de acceso sin permisos a URI: {}", path);
-        ErrorResponse body = new ErrorResponse(
-                "No tiene los permisos suficientes para acceder a este recurso.",
+    public ResponseEntity<ErrorResponseDTO> handleAccessDenied(AccessDeniedException ex) {
+        log.warn("Acceso denegado (403): Intento de acceso sin permisos.");
+        
+        ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.FORBIDDEN.value(),
-                path,
-                LocalDateTime.now()
+                "No tiene los permisos suficientes para acceder a este recurso.",
+                System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
     }
 
-    // Un "salvavidas" final. Captura CUALQUIER otra excepción (Error 500) que no hayamos contemplado arriba.
+    // 6. Salvavidas final para errores del servidor (500)
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, WebRequest req) {
-        String path = req != null ? req.getDescription(false) : "Desconocido";
-        // Usamos log.error y le pasamos 'ex' para que los desarrolladores puedan ver todo el rastro (stack trace) del error en consola.
-        log.error("Error interno del servidor no controlado en la URI: {}", path, ex);
-        // Pero al cliente solo le devolvemos un mensaje genérico para no revelar detalles sensibles o de la base de datos.
-        ErrorResponse body = new ErrorResponse(
-                "Ha ocurrido un error interno en el servidor.",
+    public ResponseEntity<ErrorResponseDTO> handleGeneral(Exception ex) {
+        log.error("Error interno del servidor no controlado: ", ex);
+        
+        ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                path,
-                LocalDateTime.now()
+                "Ha ocurrido un error interno en el servidor.",
+                System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
 
-    // Sobrescribe el método base de Spring Boot que salta cuando fallan las validaciones de las anotaciones (Ej: @Valid en los controladores).
+    // 7. Errores de validación de campos (@Valid) (400)
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, 
@@ -135,16 +122,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status, 
             WebRequest request) {
         
-        // Guardamos el error en una variable local para evitar la advertencia de posible puntero nulo
-        FieldError fieldError = ex.getFieldError();
-        String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Error de validación";
-        String path = request != null ? request.getDescription(false) : "Desconocido";
+        // Juntamos todos los errores de campos si es que hay varios
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
         
-        ErrorResponse body = new ErrorResponse(
-                errorMessage,
+        if (errorMessage.isEmpty()) {
+            errorMessage = "Error de validación en la solicitud.";
+        }
+
+        ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.BAD_REQUEST.value(),
-                path,
-                LocalDateTime.now()
+                errorMessage,
+                System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
