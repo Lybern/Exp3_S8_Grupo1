@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.minimarket.exception.BadRequestException;
 
 @Entity
 public class Carrito {
@@ -50,7 +51,7 @@ public class Carrito {
                 
                 // Validar stock con el acumulado
                 if (producto.getStock() < nuevaCantidadTotal) {
-                    throw new IllegalArgumentException("Stock insuficiente. Disponible: " + producto.getStock());
+                    throw new BadRequestException("Stock insuficiente. Disponible: " + producto.getStock());
                 }
                 
                 // Aumentar el contador
@@ -61,7 +62,7 @@ public class Carrito {
 
         // 2. Si es un producto nuevo en el carrito, validar stock inicial
         if (producto.getStock() < cantidadAAgregar) {
-            throw new IllegalArgumentException("Stock insuficiente. Disponible: " + producto.getStock());
+            throw new BadRequestException("Stock insuficiente. Disponible: " + producto.getStock());
         }
 
         // Crear el nuevo registro para la tabla intermedia

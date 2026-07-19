@@ -54,7 +54,6 @@ public class CarritoServiceImpl implements CarritoService {
         Producto producto = productoRepository.findById(productoId)
                 .orElseThrow(() -> new NotFoundException("El producto con ID " + productoId + " no existe."));
 
-        // Lanza IllegalArgumentException nativo de la entidad si falta stock, el cual también podemos atrapar o mapear
         carrito.agregarProducto(producto, cantidad);
 
         return carritoRepository.save(carrito);

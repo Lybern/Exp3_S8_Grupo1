@@ -1,5 +1,6 @@
 package com.minimarket.entity;
 
+import com.minimarket.exception.BadRequestException; // Importación agregada
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
@@ -136,8 +137,9 @@ class CarritoTest {
     void agregarProducto_noDebeAgregarCuandoStockEsInsuficiente() {
         producto.setStock(3); // Stock menor a la cantidad solicitada (5)
 
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        // Corregido: Ahora espera BadRequestException en lugar de IllegalArgumentException
+        BadRequestException excepcion = assertThrows(
+                BadRequestException.class,
                 () -> carrito.agregarProducto(producto, 5)
         );
 
@@ -153,8 +155,9 @@ class CarritoTest {
         carrito.agregarProducto(producto, 4);
 
         // Intentamos agregar 3 unidades más (Total acumulado sería 7, supera el stock de 6)
-        IllegalArgumentException excepcion = assertThrows(
-                IllegalArgumentException.class,
+        // Corregido: Ahora espera BadRequestException en lugar de IllegalArgumentException
+        BadRequestException excepcion = assertThrows(
+                BadRequestException.class,
                 () -> carrito.agregarProducto(producto, 3)
         );
 

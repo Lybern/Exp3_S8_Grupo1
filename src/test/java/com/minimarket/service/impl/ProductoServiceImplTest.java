@@ -1,5 +1,6 @@
 package com.minimarket.service.impl;
 
+import com.minimarket.entity.Inventario;
 import com.minimarket.entity.Producto;
 import com.minimarket.exception.BadRequestException;
 import com.minimarket.exception.NotFoundException;
@@ -294,5 +295,6 @@ public void testModificarProducto_UsuarioEsAdmin_ActualizaExitosamente() {
         assertEquals("El ID y los datos de actualización no pueden ser nulos.", exception.getMessage());
         verifyNoInteractions(productoRepository);
     }
+
 
 }

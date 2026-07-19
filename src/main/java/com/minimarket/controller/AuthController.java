@@ -2,9 +2,9 @@ package com.minimarket.controller;
 
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import com.minimarket.dto.ErrorResponseDTO;
 
 import java.util.Map;
@@ -30,6 +30,7 @@ import com.minimarket.entity.Usuario;
 import com.minimarket.exception.AccountBlockedException;
 import com.minimarket.exception.BadRequestException;
 import com.minimarket.exception.NotFoundException;
+import com.minimarket.exception.UnauthorizedException;
 import com.minimarket.service.RolService; 
 import com.minimarket.service.UsuarioService; 
 import com.minimarket.security.monitor.SuspiciousActivityService;
@@ -74,6 +75,7 @@ public class AuthController {
     @io.swagger.v3.oas.annotations.Operation(summary="Registro interno")
     @ApiResponse(responseCode="200", description="Registrado", content=@Content(mediaType="application/json"))
     @PostMapping("/registro-interno")
+    @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<?> registroInterno(@RequestBody RegisterRequest request) {
 
         // Validaciones básicas de nulidad
@@ -183,7 +185,7 @@ public class AuthController {
             );
         } catch (AuthenticationException e) {
             suspiciousActivityService.recordFailedLogin(request, loginRequest.getUsername());
-            throw new BadRequestException("Credenciales inválidas");
+            throw new UnauthorizedException("No Autorizado: Usuario o contraseña incorrectos.");
         }
 
         Usuario usuarioBD = usuarioService 

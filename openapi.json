@@ -1711,7 +1711,12 @@
                             "application/json": {}
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/auth/register": {
@@ -1995,6 +2000,16 @@
                         "description": "Movimientos obtenidos exitosamente",
                         "content": {
                             "application/json": {}
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponseDTO"
+                                }
+                            }
                         }
                     },
                     "400": {

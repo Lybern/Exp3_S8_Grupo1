@@ -1,7 +1,9 @@
 package com.minimarket.controller;
 
 import com.minimarket.entity.Inventario;
+import com.minimarket.exception.NotFoundException;
 import com.minimarket.service.InventarioService;
+import com.minimarket.service.impl.ProductoServiceImpl;
 import com.minimarket.dto.InventarioRequestDTO;
 import com.minimarket.dto.InventarioResponseDTO;
 import com.minimarket.dto.ErrorResponseDTO;
@@ -40,7 +42,7 @@ public class InventarioController {
 
     @Autowired
     private InventarioService inventarioService;
-
+   
     @GetMapping
     @Operation(summary = "Obtener movimientos de inventario", description = "Devuelve una lista de todos los movimientos")
     @ApiResponses(value = {
@@ -59,7 +61,8 @@ public class InventarioController {
     @GetMapping("/producto/{productoId}")
     @Operation(summary = "Obtener movimientos por producto", description = "Devuelve los movimientos de un producto específico")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Movimientos obtenidos exitosamente", content = @Content(mediaType = "application/json"))
+        @ApiResponse(responseCode = "200", description = "Movimientos obtenidos exitosamente", content = @Content(mediaType = "application/json")),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponseDTO.class)))
     })
     @SecurityRequirement(name = "bearerAuth")
     public CollectionModel<EntityModel<InventarioResponseDTO>> listarPorProducto(@Parameter(description = "ID del producto") @PathVariable Long productoId) {
@@ -88,6 +91,7 @@ public class InventarioController {
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<EntityModel<InventarioResponseDTO>> registrarMovimiento(@Valid @RequestBody InventarioRequestDTO dto) {
+       
         Inventario guardado = inventarioService.save(dto.toEntity());
         EntityModel<InventarioResponseDTO> model = EntityModel.of(InventarioResponseDTO.from(guardado),
                 linkTo(methodOn(InventarioController.class).listarPorProducto(guardado.getProducto().getId())).withRel("por-producto"),

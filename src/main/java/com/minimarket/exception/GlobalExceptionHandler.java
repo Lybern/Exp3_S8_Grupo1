@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.minimarket.dto.ErrorResponseDTO; // <-- IMPORTANTE: Importamos tu DTO real
@@ -57,6 +58,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    /* 
     // 3. Fallos de login (401)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDTO> handleBadCredentials(BadCredentialsException ex, WebRequest req) {
@@ -70,6 +72,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Username o contraseña incorrectos.",
+                System.currentTimeMillis()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+    */
+
+    // 3.1. Fallos de autorización y credenciales personalizadas (401)
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleUnauthorized(UnauthorizedException ex) {
+        log.warn("Acceso no autorizado: {}", ex.getMessage());
+        
+        ErrorResponseDTO body = new ErrorResponseDTO(
+                HttpStatus.UNAUTHORIZED.value(), // Devuelve 401
+                ex.getMessage(),
                 System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
@@ -134,6 +150,26 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponseDTO body = new ErrorResponseDTO(
                 HttpStatus.BAD_REQUEST.value(),
                 errorMessage,
+                System.currentTimeMillis()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDTO> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Error de tipo de argumento en la URL: {}", ex.getMessage());
+        
+        // Creamos un mensaje amigable para el cliente
+        String mensajeError = String.format(
+            "El parámetro '%s' con el valor '%s' no pudo ser convertido al tipo requerido (%s).",
+            ex.getName(), 
+            ex.getValue(), 
+            ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "desconocido"
+        );
+
+        ErrorResponseDTO body = new ErrorResponseDTO(
+                HttpStatus.BAD_REQUEST.value(),
+                mensajeError,
                 System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);

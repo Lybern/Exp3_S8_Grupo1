@@ -1,9 +1,11 @@
 package com.minimarket.service.impl;
 
 import com.minimarket.entity.Inventario;
+import com.minimarket.entity.Producto;
 import com.minimarket.exception.BadRequestException;
 import com.minimarket.exception.NotFoundException;
 import com.minimarket.repository.InventarioRepository;
+import com.minimarket.repository.ProductoRepository;
 import com.minimarket.service.InventarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +19,8 @@ public class InventarioServiceImpl implements InventarioService {
 
     @Autowired
     private InventarioRepository inventarioRepository;
+    @Autowired
+    private ProductoRepository productoRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -45,6 +49,9 @@ public class InventarioServiceImpl implements InventarioService {
         if (inventario == null || inventario.getProducto() == null) {
             throw new BadRequestException("Los datos del movimiento de inventario son inválidos.");
         }
+        // El servicio valida la regla de negocio antes de guardar
+        Producto producto = productoRepository.findById(inventario.getProducto().getId())
+            .orElseThrow(() -> new NotFoundException("No se puede registrar el movimiento. El producto con ID " + inventario.getProducto().getId() + " no existe."));
         return inventarioRepository.save(inventario);
     }
 
@@ -66,6 +73,12 @@ public class InventarioServiceImpl implements InventarioService {
         if (productoId == null) {
             throw new BadRequestException("El ID del producto no puede ser nulo.");
         }
+
+        // La regla de negocio se valida en el Service:
+        if (!productoRepository.existsById(productoId)) {
+            throw new NotFoundException("El producto con ID " + productoId + " no existe.");
+        }
+
         return inventarioRepository.findByProductoId(productoId);
     }
 }

@@ -5,6 +5,7 @@ import com.minimarket.entity.Producto;
 import com.minimarket.exception.BadRequestException;
 import com.minimarket.exception.NotFoundException;
 import com.minimarket.repository.InventarioRepository;
+import com.minimarket.repository.ProductoRepository; // Importación añadida
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,6 +30,9 @@ public class InventarioServiceImplTest {
 
     @Mock
     private InventarioRepository inventarioRepository;
+
+    @Mock
+    private ProductoRepository productoRepository; 
 
     @InjectMocks
     private InventarioServiceImpl inventarioService;
@@ -103,12 +108,12 @@ public class InventarioServiceImplTest {
         assertEquals("El registro de inventario con ID 999 no existe.", exception.getMessage());
     }
 
-    
-    //Verifica que un operador con rol de administrador pueda registrar movimientos en el Kardex.
+    // Verifica que un operador con rol de administrador pueda registrar movimientos en el Kardex.
     @Test
     @WithMockUser(roles = "ADMINISTRADOR")
     public void testSave_MovimientoValido_GuardaExitosamente() {
         // Arrange
+        when(productoRepository.findById(100L)).thenReturn(Optional.of(productoMock)); 
         when(inventarioRepository.save(any(Inventario.class))).thenReturn(movimientoMock);
 
         // Act
@@ -117,13 +122,12 @@ public class InventarioServiceImplTest {
         // Assert
         assertNotNull(resultado);
         assertEquals(1L, resultado.getId());
-        assertEquals(15, resultado.getProducto().getStock()); // Se valida el stock real segun tu CRUD
+        assertEquals(15, resultado.getProducto().getStock()); // Se valida el stock real según el CRUD
         verify(inventarioRepository, times(1)).save(movimientoMock);
     }
 
-
-    //Verifica que un cajero o rol no facultado sea interceptado al intentar registrar movimientos de stock.
-   @Test
+    // Verifica que un cajero o rol no facultado sea interceptado al intentar registrar movimientos de stock.
+    @Test
     public void testSave_UsuarioNoEsAdmin_LanzaAccessDeniedException() {
         // Forzamos el comportamiento esperado bajo un flujo no autorizado.
         InventarioServiceImpl servicioConSecurityMock = mock(InventarioServiceImpl.class);
@@ -169,29 +173,21 @@ public class InventarioServiceImplTest {
         movimientoMock.setTipoMovimiento("ENTRADA_PROVEEDOR");
         movimientoMock.setCantidad(5);
 
+        when(productoRepository.findById(100L)).thenReturn(Optional.of(productoMock)); // Simulación añadida
         when(inventarioRepository.save(any(Inventario.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        Inventario resultado =
-            inventarioService.save(movimientoMock);
+        Inventario resultado = inventarioService.save(movimientoMock);
 
         // Assert
         assertNotNull(resultado);
-        assertEquals(
-            "ENTRADA_PROVEEDOR",
-            resultado.getTipoMovimiento()
-            );
+        assertEquals("ENTRADA_PROVEEDOR", resultado.getTipoMovimiento());
         assertEquals(5, resultado.getCantidad());
-        assertEquals(
-            100L,
-            resultado.getProducto().getId()
-            );
+        assertEquals(100L, resultado.getProducto().getId());
 
-        verify(inventarioRepository, times(1))
-            .save(movimientoMock);
-            }
-
+        verify(inventarioRepository, times(1)).save(movimientoMock);
+    }
 
     /**
      * Verifica que un administrador pueda purgar o eliminar un registro del kardex.
@@ -214,9 +210,8 @@ public class InventarioServiceImplTest {
     /**
      * Verifica que el personal de caja tenga restringido el borrado de registros de auditoría de stock.
      */
-   @Test
+    @Test
     public void testDeleteById_UsuarioNoEsAdmin_LanzaAccessDeniedException() {
-        // Eliminamos el stubbing innecesario del repositorio. Vamos directo al grano:
         InventarioServiceImpl servicioConSecurityMock = spy(inventarioService);
         doThrow(new AccessDeniedException("Acceso denegado")).when(servicioConSecurityMock).deleteById(1L);
 
@@ -230,6 +225,8 @@ public class InventarioServiceImplTest {
         // Arrange
         List<Inventario> movimientos = new ArrayList<>();
         movimientos.add(movimientoMock);
+        
+        when(productoRepository.existsById(100L)).thenReturn(true); // Simulación añadida
         when(inventarioRepository.findByProductoId(100L)).thenReturn(movimientos);
 
         // Act
@@ -249,5 +246,49 @@ public class InventarioServiceImplTest {
         });
 
         assertEquals("El ID del producto no puede ser nulo.", exception.getMessage());
+    }
+
+    @Test
+    public void testFindByProductoId_ProductoNoExiste_LanzaNotFoundException() {
+        // Arrange: Simulamos que el producto con ID 999 no existe en la BD
+        Long productoIdInexistente = 999L;
+        when(productoRepository.existsById(productoIdInexistente)).thenReturn(false);
+
+        // Act & Assert: Validamos que lance la excepción NotFoundException esperada
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
+            inventarioService.findByProductoId(productoIdInexistente);
+        });
+
+        // Verificamos el mensaje de la regla de negocio
+        assertEquals("El producto con ID 999 no existe.", exception.getMessage());
+        
+        // Verificaciones de comportamiento: se consultó la existencia, pero NUNCA se buscó en el inventario
+        verify(productoRepository, times(1)).existsById(productoIdInexistente);
+        verify(inventarioRepository, never()).findByProductoId(anyLong());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMINISTRADOR")
+    public void testSave_ProductoNoExiste_LanzaNotFoundException() {
+        // Arrange: Simulamos que el producto asociado al movimiento NO existe en la base de datos
+        // Utilizamos el ID 100L de tu productoMock configurado en el setUp()
+        when(productoRepository.findById(100L)).thenReturn(Optional.empty());
+
+        // Act & Assert: Validamos que se ejecute la lambda del orElseThrow y lance la excepción esperada
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> {
+            inventarioService.save(movimientoMock);
+        });
+
+        // Verificamos el mensaje exacto de la regla de negocio de tu InventarioServiceImpl
+        assertEquals(
+            "No se puede registrar el movimiento. El producto con ID 100 no existe.", 
+            exception.getMessage()
+        );
+
+        // Verificaciones de comportamiento:
+        // 1. Se consultó la existencia del producto en el repositorio de productos
+        verify(productoRepository, times(1)).findById(100L);
+        // 2. NUNCA se invocó al método save del inventarioRepository ya que la transacción se canceló
+        verify(inventarioRepository, never()).save(any(Inventario.class));
     }
 }

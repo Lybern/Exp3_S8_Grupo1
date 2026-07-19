@@ -163,14 +163,14 @@ public class CarritoServiceImplTest {
     }
 
     @Test
-    public void testAgregarProductoAlCarrito_StockInsuficiente_LanzaIllegalArgumentException() {
+    public void testAgregarProductoAlCarrito_StockInsuficiente_LanzaBadRequestException() {
         // Arrange
         productoMock.setStock(2); // Solicitaremos más de lo disponible
         when(carritoRepository.findByUsuarioId(1L)).thenReturn(Optional.of(carritoMock));
         when(productoRepository.findById(100L)).thenReturn(Optional.of(productoMock));
 
         // Act & Assert
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             carritoService.agregarProductoAlCarrito(1L, 100L, 5);
         });
 
